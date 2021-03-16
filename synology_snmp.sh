@@ -21,12 +21,12 @@ nas_url="localhost" #url/IP to the NAS itself. Since it is likely running on the
 nas_name=""  #Leave empty if you want to get the name from the NAS itself, otherwise provide a custom name
 ups_group="NAS" #For filtering metrics if more than one UPS, only necessary if capturing ups stats is enabled
 
-#INFLUXDB SETTINGS
+#INFLUXDB2 SETTINGS
 influxdb_host="127.0.0.1" #URL/IP for influxdb
 influxdb_port="8086" #Port influxdb is running on
-influxdb_name="telegraf" #influxdb database name, default telegraf
-influxdb_user="" #influxdb user, leave blank if you do not have an influxdb user, shame on you.
-influxdb_pass="" #influxdb password
+influxdb_bucket="" #influxdb bucket name
+influxdb_org="" #influxdb org
+influxdb_token="" #influxdb token
 
 #HTTP METHOD SETTINGS
 http_method="http" #Setting for https or http URL, default for influx is http and thus 'http'. Set to 'https' if using a secure port such as through a Reverse Proxy
@@ -375,12 +375,8 @@ while [ $i -lt $total_executions ]; do
 		echo "Skipping Network capture"
 	fi
 	
-	#Post to influxdb
-	if [[ -z $influxdb_user ]]; then
-		curl -i -XPOST "$http_method://$influxdb_host:$influxdb_port/write?db=$influxdb_name" --data-binary "$post_url"
-	else
-		curl -i -XPOST "$http_method://$influxdb_host:$influxdb_port/write?db=$influxdb_name&u=$influxdb_user&p=$influxdb_pass" --data-binary "$post_url"
-	fi
+	#Post to influxdb2
+	curl --request POST "http://$influxdb_host:$influxdb_port/api/v2/write?org=$influxdb_org&bucket=$influxdb_bucket&precision=s" --header "Authorization: Token $influxdb_token" --data-raw "$post_url"
 	echo "$post_url"
 	
 	let i=i+1
